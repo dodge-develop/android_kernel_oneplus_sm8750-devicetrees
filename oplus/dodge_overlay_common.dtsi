@@ -27,12 +27,15 @@
 	/*
 	 * Skin-temp CPU/GPU mitigation ladder on xo-therm, standing in for
 	 * the OOS ThermalService freq caps absent on AOSP. step_wise walks
-	 * cdev states within each range while the trip is exceeded.
+	 * cdev states within each range while the trip is exceeded; the
+	 * ranges deepen tier by tier so heavier loads always have mitigation
+	 * left rather than pinning at a ceiling. Upper bounds stop short of
+	 * cdev max (cpufreq 15, kgsl 13) to keep the device usable when hot.
 	 */
 	sys-therm-0 {
 		trips {
 			skin_warm_trip: skin-warm {
-				temperature = <45000>;
+				temperature = <46000>;
 				hysteresis = <3000>;
 				type = "passive";
 			};
@@ -40,6 +43,12 @@
 			skin_hot_trip: skin-hot {
 				temperature = <49000>;
 				hysteresis = <3000>;
+				type = "passive";
+			};
+
+			skin_crit_trip: skin-crit {
+				temperature = <52000>;
+				hysteresis = <4000>;
 				type = "passive";
 			};
 		};
@@ -52,22 +61,42 @@
 
 			skin_warm_apc1 {
 				trip = <&skin_warm_trip>;
-				cooling-device = <&CPU6 0 6>;
+				cooling-device = <&CPU6 0 5>;
+			};
+
+			skin_warm_gpu {
+				trip = <&skin_warm_trip>;
+				cooling-device = <&msm_gpu 0 2>;
 			};
 
 			skin_hot_apc0 {
 				trip = <&skin_hot_trip>;
-				cooling-device = <&CPU0 4 8>;
+				cooling-device = <&CPU0 4 9>;
 			};
 
 			skin_hot_apc1 {
 				trip = <&skin_hot_trip>;
-				cooling-device = <&CPU6 6 12>;
+				cooling-device = <&CPU6 5 10>;
 			};
 
 			skin_hot_gpu {
 				trip = <&skin_hot_trip>;
-				cooling-device = <&msm_gpu 1 3>;
+				cooling-device = <&msm_gpu 2 5>;
+			};
+
+			skin_crit_apc0 {
+				trip = <&skin_crit_trip>;
+				cooling-device = <&CPU0 9 13>;
+			};
+
+			skin_crit_apc1 {
+				trip = <&skin_crit_trip>;
+				cooling-device = <&CPU6 10 14>;
+			};
+
+			skin_crit_gpu {
+				trip = <&skin_crit_trip>;
+				cooling-device = <&msm_gpu 5 9>;
 			};
 		};
 	};
