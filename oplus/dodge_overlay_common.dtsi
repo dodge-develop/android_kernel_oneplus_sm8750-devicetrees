@@ -33,6 +33,13 @@
 	 * cdev max (cpufreq 15, kgsl 13) to keep the device usable when hot.
 	 */
 	sys-therm-0 {
+		/*
+		 * step_wise walks one state per update, so poll faster while a
+		 * ladder trip is throttling (default 5000 ms is far too slow to
+		 * reach the tier ceilings under a sustained load).
+		 */
+		polling-delay-passive = <250>;
+
 		trips {
 			skin_warm_trip: skin-warm {
 				temperature = <46000>;
