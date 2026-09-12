@@ -101,6 +101,60 @@
 		};
 	};
 
+	/*
+	 * The vendor AIDL thermal HAL reports its SKIN severities on this zone
+	 * (sys-therm-2, pm8550_skin_therm, an ADC_TM channel) and the framework
+	 * derives its global thermal status from SKIN alone. The HAL only
+	 * refreshes a sensor when the kernel pushes a netlink event, which for
+	 * an ADC_TM channel comes from the hardware window armed from these
+	 * trips. Without trips in the 48-60 C band the severity never changes
+	 * and stays at its boot-time value instead of tracking the skin
+	 * temperature, so mirror the HAL severities below. No cooling-maps on
+	 * purpose: this only drives event reporting, not mitigation.
+	 */
+	sys-therm-2 {
+		/*
+		 * The HAL only re-reads this zone on a netlink event and
+		 * there is no cooling device to keep it polling, so poll it
+		 * here: one sample per second keeps the whole ladder in
+		 * sync.
+		 */
+		polling-delay = <1000>;
+
+		trips {
+			/*
+			 * Baseline CRITICAL trip; keeps its gpu_dump_skip
+			 * cooling-map. Its 10 C hysteresis left the
+			 * CRITICAL -> SEVERE transition unreported down to
+			 * 50 C.
+			 */
+			sys-therm2-config0 {
+				hysteresis = <2000>;
+			};
+
+			/* HAL LIGHT, 48 C */
+			skin-light {
+				temperature = <48000>;
+				hysteresis = <2000>;
+				type = "passive";
+			};
+
+			/* HAL MODERATE, 49 C; 1 C gap, so a tighter window */
+			skin-moderate {
+				temperature = <49000>;
+				hysteresis = <1000>;
+				type = "passive";
+			};
+
+			/* HAL SEVERE, 50 C */
+			skin-severe {
+				temperature = <50000>;
+				hysteresis = <2000>;
+				type = "passive";
+			};
+		};
+	};
+
 };
 
 &pm8550_flash0 {
